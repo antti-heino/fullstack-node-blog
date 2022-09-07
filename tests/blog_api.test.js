@@ -110,7 +110,32 @@ describe('POST tests', () => {
 
 })
 
+test('PUT updates likes', async () => {
 
+    const blogs = await Helper.blogsInDb()
+    const blog = blogs[0]
+    blog.likes = 21
+
+
+    const updatedBlog = await api
+      .put(`/api/blogs/${blog.id}`)
+      .send(blog)
+      .expect(200)
+
+    expect(updatedBlog.body.likes).toBe(blog.likes)
+  })
+
+test('DELETE works', async () => {
+    let blogs = await Helper.blogsInDb()
+    const blog = blogs[0]
+    await api
+      .delete(`/api/blogs/${blog.id}`)
+      .expect(204)
+
+    blogs = await Helper.blogsInDb()
+    const blogsIds = blogs.map((bl) => bl.id)
+    expect(blogsIds).not.toContain(blog.id)
+  })
 
 afterAll(() => {
   mongoose.connection.close()
