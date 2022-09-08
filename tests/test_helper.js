@@ -45,10 +45,34 @@ const testBlogs = [
     }  
   ]
 
+  const testUsers = [
+    {
+        username: "aaaa",
+        password: "asdf",
+        name: "aa bb"
+    },
+    {
+        username: "bbbb",
+        password: "fdsa",
+        name: "bb cc"
+    },
+    {
+        username: "cccc",
+        password: "qwerty",
+        name: "cc dd"
+    }
+]
+
+const testuser = {
+    username: "cccc",
+    password: "qwerty",
+    name: "cc dd"
+}
+
   const blogsInDb = async () => {
     const blogs = await Blog.find({});
     return blogs.map((blog) => blog.toJSON());
   };
 
 module.exports = {
-    testBlogs, blogsInDb }
+    testBlogs, blogsInDb, testUsers }

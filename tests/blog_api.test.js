@@ -3,16 +3,31 @@ const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../models/Blog')
 const Helper = require('./test_helper')
+const User = require('../models/User')
+const jwt = require('jsonwebtoken')
 
 const api = supertest(app)
+let token
 
 beforeEach(async () => {
     await Blog.deleteMany({})
-  
-    for (let blog of Helper.testBlogs) {
-      let blogObject = new Blog(blog)
-      await blogObject.save()
-    }
+    await User.deleteMany({})
+
+    const user = new User({
+      username: 'test',
+      passowrd: 'qwerty',
+    }).save()
+
+    const userForToken = { username: user.username, id: user._id }
+    token = jwt.sign(userForToken, process.env.SECRET)
+
+    console.log(token)
+    await Promise.all(
+      Helper.testBlogs.map((blog) => {
+        blog.user = user._id
+        return new Blog(blog).save()
+      })
+    )
   })
 
 
@@ -52,6 +67,7 @@ describe('POST tests', () => {
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `bearer ${token}`)
         .expect(201)
         .expect("Content-Type", /application\/json/);
     
@@ -71,6 +87,7 @@ describe('POST tests', () => {
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set('Authorization', `bearer ${token}`)
         .expect(400)
         .expect("Content-Type", /application\/json/);
 
@@ -82,6 +99,7 @@ describe('POST tests', () => {
     }
     await api
     .post('/api/blogs')
+    .set('Authorization', `bearer ${token}`)
     .send(newBlog)
 
     const response = await Helper.blogsInDb()
@@ -120,6 +138,7 @@ test('PUT updates likes', async () => {
     const updatedBlog = await api
       .put(`/api/blogs/${blog.id}`)
       .send(blog)
+      .set('Authorization', `bearer ${token}`)
       .expect(200)
 
     expect(updatedBlog.body.likes).toBe(blog.likes)
@@ -130,6 +149,7 @@ test('DELETE works', async () => {
     const blog = blogs[0]
     await api
       .delete(`/api/blogs/${blog.id}`)
+      .set('Authorization', `bearer ${token}`)
       .expect(204)
 
     blogs = await Helper.blogsInDb()
